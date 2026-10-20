@@ -1,0 +1,233 @@
+======================================================================
+  DOCUMENTACAO - ATIVIDADE AVALIATIVA 03
+  Algoritmos de Ordenacao + Manipulacao de Arquivos em C
+  Arquivo-fonte: ordenacao_arquivos.c
+======================================================================
+
+1. OBJETIVO
+----------------------------------------------------------------------
+Programa unico, em C, que integra algoritmos de ordenacao com leitura e
+gravacao de arquivos texto. Atende aos 5 requisitos da atividade:
+
+  Requisito do enunciado                         | Onde no programa
+  -----------------------------------------------+---------------------------
+  1) Criar e gravar arquivo com dados desordenados| Menu 1 -> opcaoCriarDados
+  2) Ler os dados do arquivo                      | lerArquivo (menus 2,3,4,5)
+  3) Escolher o tipo de ordenacao                 | escolherEOrdenar
+  4) Ordenar e salvar em novo arquivo             | Menu 3 -> opcaoOrdenar
+  5) Alterar um valor no arquivo e reordenar      | Menu 4 -> opcaoAlterarValor
+
+
+2. COMO COMPILAR E EXECUTAR
+----------------------------------------------------------------------
+  Linux / terminal:
+      gcc ordenacao_arquivos.c -o ordenacao
+      ./ordenacao
+
+  Windows (Dev-C++ / Code::Blocks):
+      Abrir o arquivo .c e usar "Compilar e Executar".
+
+  O codigo segue o padrao C89 (variaveis declaradas no inicio dos
+  blocos, comentarios /* */), entao compila tambem em compiladores
+  antigos. Testado com: gcc -std=c89 -pedantic -Wall -Wextra
+  (zero avisos).
+
+  Os arquivos dados.txt e ordenado.txt sao criados na PASTA EM QUE O
+  PROGRAMA E EXECUTADO, que nem sempre e a pasta do .c (Dev-C++,
+  VS Code e Code::Blocks podem usar outra). Por isso o programa mostra
+  o caminho completo sempre que salva um arquivo.
+  ordenado.txt so passa a existir depois do menu 3 (ou 4).
+
+
+3. ARQUIVOS UTILIZADOS
+----------------------------------------------------------------------
+  dados.txt     -> valores ORIGINAIS (entrada), desordenados.
+                   So muda pelos menus 1 (cria/sobrescreve) e 4 (altera).
+  ordenado.txt  -> valores JA ORDENADOS (saida). Regravado a cada
+                   ordenacao (menus 3 e 4).
+
+  Formato: texto puro, um numero inteiro por linha. Exemplo:
+      7
+      2
+      9
+      4
+      1
+
+  Importante: ordenar NAO altera dados.txt. O original e preservado,
+  e o resultado vai para o outro arquivo, como pede o enunciado.
+
+
+4. MENU PRINCIPAL
+----------------------------------------------------------------------
+  1 - Criar/gravar dados.txt
+        Pergunta a quantidade (1 a 1000) e se os valores serao
+        digitados ou gerados aleatoriamente (0 a 999).
+  2 - Exibir dados.txt
+  3 - Ordenar dados.txt e salvar em ordenado.txt
+        Le o arquivo, mostra antes/depois, pede o algoritmo e grava.
+  4 - Alterar um valor em dados.txt e reordenar
+        Lista os valores com sua posicao [1..n], pede a posicao e o
+        novo valor, regrava dados.txt e chama a ordenacao de novo
+        (atualizando ordenado.txt).
+  5 - Exibir ordenado.txt
+  0 - Sair
+
+
+5. CONSTANTES
+----------------------------------------------------------------------
+  MAX           1000            capacidade maxima do vetor
+  ARQ_DADOS     "dados.txt"     arquivo de entrada
+  ARQ_ORDENADO  "ordenado.txt"  arquivo de saida
+
+
+6. FUNCOES
+----------------------------------------------------------------------
+6.1 Entrada pelo teclado
+
+  void limparBuffer(void)
+      Descarta os caracteres que sobraram na linha digitada ate o '\n'.
+      Evita que um "Enter" ou letra digitada atrapalhe o proximo scanf.
+
+  int lerInteiro(const char *msg, int min, int max)
+      Mostra 'msg' e le um inteiro. Repete enquanto o valor nao for
+      numero ou estiver fora de [min, max]. Se a entrada acabar (EOF),
+      encerra o programa para nao entrar em loop infinito.
+      Retorno: o inteiro valido digitado.
+
+6.2 Arquivos
+
+  void mostrarCaminho(const char *nome)
+      Mostra na tela a pasta onde o arquivo foi salvo (usa getcwd no
+      Linux/Mac e _getcwd no Windows). Ajuda a achar dados.txt e
+      ordenado.txt quando a IDE executa o programa em outra pasta.
+
+  int gravarArquivo(const char *nome, const int v[], int n)
+      Abre 'nome' em modo "w" (cria ou sobrescreve) e grava os n
+      valores, um por linha, com fprintf. Fecha com fclose.
+      Ao final chama mostrarCaminho.
+      Retorno: 1 = sucesso, 0 = erro ao abrir.
+
+  int lerArquivo(const char *nome, int v[], int max)
+      Abre 'nome' em modo "r" e le com fscanf ate acabar o arquivo
+      ou atingir 'max' valores.
+      Retorno: quantidade lida (0 = vazio) ou -1 se o arquivo nao existe.
+
+  void exibirVetor(const char *titulo, const int v[], int n)
+      Imprime o vetor na tela, 10 valores por linha.
+
+6.3 Ordenacao (todas em ordem crescente, "in place", no proprio vetor)
+
+  void trocar(int *a, int *b)
+      Troca o conteudo de duas posicoes usando uma variavel auxiliar.
+      Recebe ponteiros para alterar os valores originais.
+
+  void bubbleSort(int v[], int n)
+      Compara pares vizinhos v[j] e v[j+1] e troca se estiverem fora
+      de ordem. A cada passada o maior elemento restante "sobe" para o
+      fim. Usa a flag houveTroca: se uma passada nao trocar nada, o
+      vetor ja esta ordenado e o laco para (otimizacao).
+
+  void insertionSort(int v[], int n)
+      Para cada i a partir de 1, guarda v[i] em 'chave' e desloca para
+      a direita todos os elementos maiores que ela na parte ja
+      ordenada; depois insere a chave no buraco aberto.
+
+  void selectionSort(int v[], int n)
+      Para cada posicao i, procura o indice do menor elemento em
+      v[i..n-1] e troca com v[i] (so troca se menor != i).
+
+  void mergeSort(int v[], int inicio, int ultimo)
+      Divisao e conquista: divide no meio, ordena cada metade
+      recursivamente e junta com intercalar(). Caso base: inicio >= ultimo
+      (um elemento ja esta ordenado).
+      Chamada inicial: mergeSort(v, 0, n-1).
+
+  void intercalar(int v[], int inicio, int meio, int ultimo)
+      Junta as metades ordenadas v[inicio..meio] e v[meio+1..ultimo] num
+      vetor auxiliar, sempre pegando o menor dos dois "topos", copia as
+      sobras e devolve o resultado para v. Usa <= para manter a ordem
+      relativa de valores iguais (estavel).
+
+  void quickSort(int v[], int inicio, int ultimo)
+      Divisao e conquista: particiona em torno de um valor de referencia
+      (o "pivo") e ordena recursivamente a parte da esquerda e a da
+      direita dele. 'ultimo' e o indice do ultimo elemento do trecho.
+      Chamada inicial: quickSort(v, 0, n-1).
+
+  int particionar(int v[], int inicio, int ultimo)
+      Particionamento de Lomuto. A variavel 'referencia' (o pivo) recebe
+      o ultimo elemento do trecho (v[ultimo]). 'i' marca o fim da regiao
+      dos menores-ou-iguais a referencia; 'j' percorre o trecho. Quando
+      v[j] <= referencia, avanca i e troca v[i] com v[j]. No final,
+      coloca a referencia na posicao i+1, que e a posicao definitiva
+      dela. Retorno: i+1.
+
+  const char *escolherEOrdenar(int v[], int n)
+      Mostra o submenu de algoritmos, le a escolha (1 a 5), executa o
+      algoritmo e devolve o nome dele (para a mensagem final).
+
+6.4 Opcoes do menu
+
+  void opcaoCriarDados(void)        -> menu 1
+  void opcaoExibirArquivo(nome)     -> menus 2 e 5
+  void opcaoOrdenar(void)           -> menu 3 (tambem chamada pelo 4)
+  void opcaoAlterarValor(void)      -> menu 4
+      A posicao digitada pelo usuario vai de 1 a n; no vetor ela vira
+      o indice pos-1 (vetores em C comecam em 0).
+
+  int main(void)
+      Inicializa a semente de rand() com srand(time(NULL)) e repete o
+      menu (do-while) ate o usuario escolher 0.
+
+
+7. COMPLEXIDADE DOS ALGORITMOS
+----------------------------------------------------------------------
+  Algoritmo   | Melhor caso | Caso medio  | Pior caso  | Estavel?
+  ------------+-------------+-------------+------------+---------
+  Bubble      | O(n)  (*)   | O(n^2)      | O(n^2)     | Sim
+  Insertion   | O(n)        | O(n^2)      | O(n^2)     | Sim
+  Selection   | O(n^2)      | O(n^2)      | O(n^2)     | Nao
+  Merge       | O(n log n)  | O(n log n)  | O(n log n) | Sim
+  Quick       | O(n log n)  | O(n log n)  | O(n^2) (**)| Nao
+
+  (*)  Gracas a flag houveTroca (vetor ja ordenado -> 1 passada).
+  (**) Com a referencia (pivo) = ultimo elemento, o pior caso acontece quando o vetor
+       ja esta ordenado ou invertido.
+
+  Memoria extra: Merge Sort usa um vetor auxiliar; os demais, O(1)
+  (fora a pilha de recursao do Quick/Merge).
+
+
+8. TRATAMENTO DE ERROS
+----------------------------------------------------------------------
+  - Entrada nao numerica ou fora do intervalo: mensagem e nova leitura.
+  - Tentar ordenar/alterar sem dados.txt: mensagem pedindo o menu 1.
+  - Falha ao abrir arquivo para escrita: mensagem de erro, sem travar.
+  - Fim da entrada (EOF): programa encerra em vez de entrar em loop.
+
+
+9. LIMITACOES CONHECIDAS
+----------------------------------------------------------------------
+  - Maximo de 1000 valores (constante MAX). Se dados.txt tiver mais,
+    so os 1000 primeiros sao lidos.
+  - Apenas numeros inteiros (int).
+  - A alteracao (menu 4) e feita pela POSICAO, nao pelo valor. Isso
+    evita ambiguidade quando ha valores repetidos.
+  - Linhas nao numericas no meio do arquivo interrompem a leitura
+    naquele ponto (fscanf para de ler).
+
+
+10. TESTES REALIZADOS
+----------------------------------------------------------------------
+  - Compilacao: gcc -std=c89 -pedantic -Wall -Wextra -> sem avisos.
+  - Os 5 algoritmos com 500 valores aleatorios: ordenado.txt conferido
+    contra a ordenacao esperada -> todos corretos.
+  - Casos de borda: 1 valor; valores repetidos -> corretos.
+  - Fluxo completo: criar {7,2,9,4,1}, ordenar, alterar posicao 3
+    (9 -> 3), reordenar -> dados.txt = {7,2,3,4,1},
+    ordenado.txt = {1,2,3,4,7}.
+  - Entrada invalida (letras, opcao 9) -> rejeitada corretamente.
+
+  O teste de mesa dos 5 algoritmos esta em teste_de_mesa.docx
+  (todos com o vetor original {7,2,9,4,1}).
+======================================================================
